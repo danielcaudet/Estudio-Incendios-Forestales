@@ -39,9 +39,9 @@ Comprobado (los requisitos están en 03_DATOS.md):
 
 ## 3. Tres preguntas que quiero responder
 
-1. ¿Han aumentado los incendios, muertes y pérdidas en los últimos años?
-2. ¿Que relación existe entre lo que se gasta para apagar un incendio y las pérdidas que provoca?
-3. ¿Dónde y cuando hay más incendios?
+1. ¿Que comunidades son las más afectadas?
+2. ¿Hay más o menos incendios que antes, y son estos más grandes o más pequeños?
+3. ¿Que meses son los más peligrosos?
 
 ## 4. La app
 
@@ -51,7 +51,7 @@ Comprobado (los requisitos están en 03_DATOS.md):
 
 ¿Qué pregunta le harías al usuario al final? (como "¿Cuánto cobrarías por tu piso?")
 
-¿Debes aumentar la inversión para combatir los incendios?
+Según tu comunidad autónoma, ¿que posiblidades tienes de que te afecte un incendio?
 
 ¿Tienen coordenadas para hacer un mapa?
 - [X] Sí
