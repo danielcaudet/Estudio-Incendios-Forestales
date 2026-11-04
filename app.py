@@ -1,7 +1,7 @@
 import streamlit as st   # Después de instalar streamlit en mi entorno virtual, lo importo a mi archivo
 import pandas as pd      # Importo pandas también pues me será necesario para trabajar los datos
 import datetime          # Datetime para poder utilizar las fechas
-import matplotlib        # Matplotlib será necesario a la hora de leer gráficas
+import altair as alt     # Altair será necesario para algunas gráficas
 
 st.set_page_config(         # Coloco el nombre y emoji de la página, el que se verá en la pestaña. 
     page_title = "Incendios forestales en España",
@@ -99,29 +99,42 @@ with col4:
 
 
 
-tab1, tab2, tab3, tab4 = st.tabs (["Incendios", "Gráficas", "Mapa", "¿Cuanta probabilidad de verte afectado por un incendio forestal tienes?"])  # Comienzo con las pestañas
+tab1, tab2, tab3, tab4 = st.tabs (["Incendios", "Gráficas", "Mapa", "Impacto en tu provincia"])  # Comienzo con las pestañas
 
 with tab1:      # En la primera pestaña muestro la tabla de incendios
     st.header("Los incendios filtrados")
     st.dataframe(filtrados)
 
+    
+
+    
 with tab2:
     st.subheader("Número de incendios y hectáreas quemadas por comunidad")
     colx, coly = st.columns(2) # 3 columnas para los gráficos
 
     with colx:
         st.subheader("Incendios")
-        com_afectadas = incendios["comunidad"].value_counts()
+        com_afectadas = filtrados["comunidad"].value_counts()
         st.bar_chart(com_afectadas, horizontal = True, height = 650, sort = "-count")
 
     with coly:
         st.subheader("Hectáreas")
-        hect_quemadas = incendios.groupby("comunidad")["hectareas"].sum()
+        hect_quemadas = filtrados.groupby("comunidad")["hectareas"].sum()
         st.bar_chart(hect_quemadas, horizontal = True, height = 650, sort = "-hectareas")
 
-    st.subheader("Meses más peligrosos")
-
     
+    st.subheader("Incendios por mes")
+
+    meses = ["Enero", "Febrero", "Marzo", "Abril","Mayo", "Junio", "Julio", "Agosto","Septiembre", "Octubre", "Noviembre", "Diciembre"]
+    # Primero coloco los nombres para que puedan salir en la gráfica, si no salfrán los números de mes
+    meses_peligrosos = (filtrados.groupby("mes").size().reindex(meses, fill_value = 0).reset_index(name="Incendios"))
+    # Creo la variable que utilizaré más adelante
+    grafica = alt.Chart(meses_peligrosos).mark_line().encode(
+        x=alt.X("mes:N", sort=meses, title="Mes", axis=alt.Axis(labelAngle= -45)),
+        y=alt.Y("Incendios:Q", title="Número de incendios")).properties(height=450)
+
+    # Preparo la gráfica y la represento con st.altair_chart
+    st.altair_chart(grafica, use_container_width=True)
 
 with tab3:   # En la tercera muestro el mapa de incendios filtrados
     st.header("Mapa de incendios")
@@ -129,4 +142,63 @@ with tab3:   # En la tercera muestro el mapa de incendios filtrados
 
 
 with tab4:
-    pass
+    provincias = sorted(incendios["provincia"].dropna().unique())     # Preparo un selectbox para elegir la provincia
+    provincia_elegida = st.selectbox("Selecciona tu provincia", provincias)
+    
+    datos_provincia = incendios[incendios["provincia"] == provincia_elegida]  # Filtro los datos de una provincia
+
+    total_incendios = len(datos_provincia)     # Total de incendios de la provincia elegida
+    total_hectareas = datos_provincia["hectareas"].sum()   # Total de hectáreas de la provincia elegida
+
+    col1, col2 = st.columns(2)
+
+    with col1:
+        st.metric("Número de incendios",total_incendios)
+
+    with col2:
+        st.metric("Hectáreas quemadas", int(total_hectareas))
+
+    st.subheader("Media nacional por provincia")
+
+    media_incendios = int(incendios["provincia"].value_counts().mean())    # Media nacional de incendios por provincia
+    media_hectareas = int(incendios.groupby("provincia")["hectareas"].sum().mean())   # Media nacional de hectáreas quemadas por provincia
+    
+
+    col1, col2 = st.columns(2)
+
+    with col1:
+        st.metric("Media de incendios", media_incendios)
+
+    with col2:
+        st.metric("Media de hectáreas", media_hectareas)
+
+    if total_incendios > media_incendios and total_hectareas > media_hectareas:   # Preparo los distintos avisos según la comparación entre la provincia y la media sea más o menos favorable
+        st.error(f"{provincia_elegida} ha sido más afectada el resto")  # Utilizo st.error para los peores casos. Saldrá en rojo
+
+    elif total_incendios < media_incendios and total_hectareas > media_hectareas:  # St.warning para casos intermedios, en que sólo una de las dos cantidades supera a la media nacional. Saldrá en amarillo
+        st.warning(f"{provincia_elegida} ha sufrido menos incendios que la media, pero han sido más extensos")
+
+    elif total_incendios > media_incendios and total_hectareas < media_hectareas:
+        st.warning(f"{provincia_elegida} ha sufrido más inendios que la media, pero han sido menos extensos")
+
+    elif total_incendios < media_incendios and total_hectareas < media_hectareas:   # St.success para las provincias menos afectadas. Saldrá en verda
+        st.success(f"{provincia_elegida} ha sido menos afectada que la media")   
+
+    st.subheader("Gráfica comparativa de incendios")
+
+    evolucion_provincia = datos_provincia["año"].value_counts().sort_index()   # Calculo la evolución de la provincia
+    evolucion_nacional = incendios["año"].value_counts().sort_index() / incendios["provincia"].nunique()   # Calculo la evolución media
+
+    comparacion = pd.DataFrame({provincia_elegida : evolucion_provincia, "Media" : evolucion_nacional})    # Las coloco en un mismo dataframe
+
+    st.line_chart(comparacion, color = ["red", "blue"])     # Muestro el dataframe, eligiendo los colores de las líneas
+
+    st.subheader("Gráfica comparativa de hectáreas quemadas")
+
+    evolucion_hectareas_provincia = datos_provincia.groupby("año")["hectareas"].sum().sort_index()
+
+    evolucion_hectareas_nacional = incendios.groupby("año")["hectareas"].sum().sort_index() / incendios["provincia"].nunique()
+
+    comparacion_hectareas = pd.DataFrame({provincia_elegida: evolucion_hectareas_provincia,"Media": evolucion_hectareas_nacional})
+
+    st.line_chart(comparacion_hectareas, color=["red", "blue"])
