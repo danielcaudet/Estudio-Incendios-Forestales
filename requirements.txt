@@ -2,3 +2,5 @@ pandas
 matplotlib
 streamlit
 ipykernel
+datetime
+altair

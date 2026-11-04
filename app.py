@@ -98,6 +98,8 @@ with col4:
 
     st.metric("Impacto económico mínimo", impacto)
 
+    st.caption("* Los datos económicos son incompletos, por lo que no se recomienda utilizar esta cifra para realizar comparaciones.")
+
 
 
 tab1, tab2, tab3, tab4 = st.tabs (["Incendios", "Gráficas", "Mapa", "Impacto en tu provincia"])  # Comienzo con las pestañas
