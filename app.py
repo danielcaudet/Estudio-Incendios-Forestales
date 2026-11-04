@@ -11,17 +11,17 @@ st.set_page_config(         # Coloco el nombre y emoji de la página, el que se 
 
 @st.cache_data   
 
-def cargar_datos():                # Cargo los datos de mis dos csv
+def cargar_datos():                # Cargo los datos de mi csv
     incendios = pd.read_csv("datos/incendios_limpios.csv")
-    grandes_incendios = pd.read_csv("datos/grandes_limpios.csv")
+    
     
 
-    return incendios, grandes_incendios
+    return incendios
 
 
-incendios, grandes_incendios = cargar_datos()
+incendios = cargar_datos()
 
-st.write("En España contabilizamos", len(incendios), "incendios forestales, de los cuales", len(grandes_incendios), "son grandes incendios")
+st.write("En España contabilizamos", len(incendios), "incendios forestales, de los cuales", len(incendios[incendios["hectareas"] >= 500]), "son grandes incendios")
 
 
 with st.sidebar:     # Aquí comienzo a colocar lo que quiero en las barras de la izquierda
@@ -104,7 +104,7 @@ tab1, tab2, tab3, tab4 = st.tabs (["Incendios", "Gráficas", "Mapa", "Impacto en
 
 with tab1:      # En la primera pestaña muestro la tabla de incendios
     st.header("Los incendios filtrados")
-    st.dataframe(filtrados)
+    st.dataframe(filtrados[["fecha", "comunidad","provincia", "municipio", "hectareas", "causa", "muertos"]])
 
     
 
