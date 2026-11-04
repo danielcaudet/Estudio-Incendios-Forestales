@@ -14,6 +14,7 @@ st.set_page_config(         # Coloco el nombre y emoji de la página, el que se 
 def cargar_datos():                # Cargo los datos de mis dos csv
     incendios = pd.read_csv("datos/incendios_limpios.csv")
     grandes_incendios = pd.read_csv("datos/grandes_limpios.csv")
+    
 
     return incendios, grandes_incendios
 
@@ -37,9 +38,9 @@ with st.sidebar:     # Aquí comienzo a colocar lo que quiero en las barras de l
     causa = st.radio("Causa", ["Todas", "Causa Natural", "Negligencias y accidentes", "Intencionados", "Causa desconocida", "Reproducciones", "Otras causas humanas"])  # Una caja de selección para elegir la causa de los incendios que se buscan
     
     hectareas_min = st.number_input("Mínimo de hectáreas quemadas", min_value=0, max_value=29867, value=0, step=100)   # Con estos number_input, podré filtrar según el tamaño de los incendios
-    hectareas_max = st.number_input("Máximo de hectáreas quemadas", min_value=0, max_value=29867, value=20867, step=100)   # Al ser números muy grandes de hecáreas, prefiero usar esto a un slider
+    hectareas_max = st.number_input("Máximo de hectáreas quemadas", min_value=0, max_value=29867, value=29867, step=100)   # Al ser números muy grandes de hecáreas, prefiero usar esto a un slider
     
-    año_min, año_max = st.slider("Año", 1980, 2023, (1980, 2023))  # Utilizo un slider para poder filtrar los años
+    año_min, año_max = st.slider("Año", 1968, 2023, (1968, 2023))  # Utilizo un slider para poder filtrar los años
 
     meses = incendios.sort_values("numero mes")["mes"].unique().tolist()       # Otro para los meses, pero antes
     mes_min, mes_max = st.select_slider("Mes", options= meses, value = ("Enero", "Diciembre") )
@@ -138,7 +139,8 @@ with tab2:
 
 with tab3:   # En la tercera muestro el mapa de incendios filtrados
     st.header("Mapa de incendios")
-    st.map(filtrados, latitude="latitud", longitude="longitud", size=20)
+    filtrados_mapa = filtrados.dropna(subset=["latitud", "longitud", "ubicación exacta"])  # Elimino los valores nulos
+    st.map(filtrados_mapa, latitude="latitud", longitude="longitud", size=20)
 
 
 with tab4:
@@ -173,7 +175,7 @@ with tab4:
         st.metric("Media de hectáreas", media_hectareas)
 
     if total_incendios > media_incendios and total_hectareas > media_hectareas:   # Preparo los distintos avisos según la comparación entre la provincia y la media sea más o menos favorable
-        st.error(f"{provincia_elegida} ha sido más afectada el resto")  # Utilizo st.error para los peores casos. Saldrá en rojo
+        st.error(f"{provincia_elegida} ha sido más afectada que el resto")  # Utilizo st.error para los peores casos. Saldrá en rojo
 
     elif total_incendios < media_incendios and total_hectareas > media_hectareas:  # St.warning para casos intermedios, en que sólo una de las dos cantidades supera a la media nacional. Saldrá en amarillo
         st.warning(f"{provincia_elegida} ha sufrido menos incendios que la media, pero han sido más extensos")
